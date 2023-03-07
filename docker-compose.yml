@@ -1,0 +1,42 @@
+services:
+  mysql:
+    image: mariadb:10
+    environment:
+      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
+      - MYSQL_DATABASE=nehuby
+    restart: unless-stopped
+    volumes:
+      - mysql:/var/lib/mysql
+      - ./nehuby.sql:/docker-entrypoint-initdb.d/init.sql
+
+  php:
+    image: demo_exam_local_php
+    build:
+      context: .
+      args:
+        - GID=${GID:-1000}
+        - UID=${UID:-1000}
+    depends_on:
+      - mysql
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    volumes:
+      - ./src:/var/www/html/src
+      - ./uploads:/var/www/html/uploads
+      - ./static:/var/www/html/static
+
+  phpmyadmin:
+    image: phpmyadmin:apache
+    depends_on:
+      - mysql
+    environment:
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - HIDE_PHP_VERSION=true
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+
+volumes:
+  mysql:
